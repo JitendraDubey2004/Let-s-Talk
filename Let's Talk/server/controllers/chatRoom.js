@@ -1,4 +1,6 @@
 import ChatRoom from "../models/ChatRoom.js";
+import ChatMessage from "../models/ChatMessage.js";
+import { decrypt } from "../utils/encryption.js";
 
 export const createChatRoom = async (req, res) => {
   const newChatRoom = new ChatRoom({
@@ -17,16 +19,34 @@ export const createChatRoom = async (req, res) => {
 
 export const getChatRoomOfUser = async (req, res) => {
   try {
-    const chatRoom = await ChatRoom.find({
+    const chatRooms = await ChatRoom.find({
       members: { $in: [req.params.userId] },
     });
-    res.status(200).json(chatRoom);
+
+    // For each chat room, find the last message
+    const chatRoomsWithLastMessage = await Promise.all(
+      chatRooms.map(async (room) => {
+        const lastMessage = await ChatMessage.findOne({ chatRoomId: room._id })
+          .sort({ createdAt: -1 })
+          .lean();
+        
+        const roomObj = room.toObject();
+        if (lastMessage) {
+          lastMessage.message = decrypt(lastMessage.message);
+          roomObj.lastMessage = lastMessage;
+        }
+        return roomObj;
+      })
+    );
+
+    res.status(200).json(chatRoomsWithLastMessage);
   } catch (error) {
     res.status(404).json({
       message: error.message,
     });
   }
 };
+
 
 export const getChatRoomOfUsers = async (req, res) => {
   try {

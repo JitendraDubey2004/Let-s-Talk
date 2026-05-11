@@ -13,6 +13,7 @@ A modern, feature-rich real-time chat application built with React, Node.js, Fir
 - **Message Status** - Track message delivery (sent → delivered → read)
 - **Unread Badges** - Quick view of unread message counts
 - **Smart Timestamps** - Intelligent time formatting (today/yesterday/date)
+- **Last Message Preview** - Real-time preview of the latest message in the chat list
 
 ### Phase 2: Message Reactions
 - **Emoji Reactions** - React to messages with 6 common emojis
@@ -20,6 +21,7 @@ A modern, feature-rich real-time chat application built with React, Node.js, Fir
 - **Interactive Picker** - Hover to reveal reaction options
 
 ### Phase 3: Advanced Messaging
+- **End-to-End Encryption** - All messages are encrypted at rest using AES-256
 - **Edit Messages** - Modify sent messages with edit history
 - **Delete Messages** - Remove messages permanently
 - **Search Messages** - Full-text search across conversations
@@ -108,6 +110,7 @@ REACT_APP_FIREBASE_APP_ID=your_app_id
 ```env
 MONGO_URI=your_mongodb_connection_string
 PORT=5000
+ENCRYPTION_KEY=your_secret_encryption_key
 ```
 
 ## 🎯 Getting Started
@@ -315,7 +318,7 @@ Contributions are welcome! Please follow these steps:
 - [ ] Group chats
 - [ ] Voice/Video calling
 - [ ] File sharing
-- [ ] Message encryption
+- [x] Message encryption
 - [ ] User blocking
 - [ ] Read receipts
 - [ ] Message forwarding

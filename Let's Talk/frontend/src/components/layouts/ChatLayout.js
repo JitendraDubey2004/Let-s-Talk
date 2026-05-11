@@ -40,14 +40,22 @@ export default function ChatLayout() {
         setonlineUsersId(userId);
       });
 
-      // Listen for new messages to update unread counts
+      // Listen for new messages to update unread counts and last message
       socket.current.on("getMessage", (data) => {
-        if (data.senderId !== currentUser.uid && (!currentChat || currentChat._id !== data.chatRoomId)) {
-          setUnreadCounts(prev => ({
-            ...prev,
-            [data.chatRoomId]: (prev[data.chatRoomId] || 0) + 1
-          }));
-        }
+        // Update unread count
+        setUnreadCounts(prev => ({
+          ...prev,
+          [data.chatRoomId]: (prev[data.chatRoomId] || 0) + 1
+        }));
+
+        // Update last message in chat list
+        setChatRooms(prevRooms => 
+          prevRooms.map(room => 
+            room._id === data.chatRoomId 
+              ? { ...room, lastMessage: { message: data.message, sender: data.senderId, createdAt: new Date() } }
+              : room
+          )
+        );
       });
     };
 
@@ -97,6 +105,16 @@ export default function ChatLayout() {
       ...prev,
       [chat._id]: 0
     }));
+  };
+
+  const handleMessageSent = (chatRoomId, message) => {
+    setChatRooms(prevRooms => 
+      prevRooms.map(room => 
+        room._id === chatRoomId 
+          ? { ...room, lastMessage: { message, sender: currentUser.uid, createdAt: new Date() } }
+          : room
+      )
+    );
   };
 
   const updateUnreadCount = (chatRoomId, count) => {
@@ -157,6 +175,7 @@ export default function ChatLayout() {
             currentChat={currentChat}
             currentUser={currentUser}
             socket={socket}
+            onMessageSent={handleMessageSent}
           />
         ) : (
           <Welcome />

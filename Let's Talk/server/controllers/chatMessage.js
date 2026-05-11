@@ -1,11 +1,19 @@
 import ChatMessage from "../models/ChatMessage.js";
+import { encrypt, decrypt } from "../utils/encryption.js";
 
 export const createMessage = async (req, res) => {
-  const newMessage = new ChatMessage(req.body);
+  const messageData = { ...req.body };
+  if (messageData.message) {
+    messageData.message = encrypt(messageData.message);
+  }
+  
+  const newMessage = new ChatMessage(messageData);
 
   try {
     await newMessage.save();
-    res.status(201).json(newMessage);
+    const result = newMessage.toObject();
+    result.message = decrypt(result.message);
+    res.status(201).json(result);
   } catch (error) {
     res.status(409).json({
       message: error.message,
@@ -18,7 +26,14 @@ export const getMessages = async (req, res) => {
     const messages = await ChatMessage.find({
       chatRoomId: req.params.chatRoomId,
     });
-    res.status(200).json(messages);
+    
+    const decryptedMessages = messages.map(msg => {
+      const m = msg.toObject();
+      m.message = decrypt(m.message);
+      return m;
+    });
+
+    res.status(200).json(decryptedMessages);
   } catch (error) {
     res.status(409).json({
       message: error.message,
@@ -75,7 +90,9 @@ export const addReaction = async (req, res) => {
       return res.status(404).json({ message: "Message not found" });
     }
 
-    res.status(200).json(message);
+    const result = message.toObject();
+    result.message = decrypt(result.message);
+    res.status(200).json(result);
   } catch (error) {
     res.status(409).json({
       message: error.message,
@@ -101,7 +118,9 @@ export const removeReaction = async (req, res) => {
       return res.status(404).json({ message: "Message not found" });
     }
 
-    res.status(200).json(message);
+    const result = message.toObject();
+    result.message = decrypt(result.message);
+    res.status(200).json(result);
   } catch (error) {
     res.status(409).json({
       message: error.message,
@@ -126,14 +145,16 @@ export const editMessage = async (req, res) => {
     const updatedMessage = await ChatMessage.findByIdAndUpdate(
       messageId,
       {
-        message: newMessage,
+        message: encrypt(newMessage),
         isEdited: true,
         editedAt: new Date()
       },
       { new: true }
     );
 
-    res.status(200).json(updatedMessage);
+    const result = updatedMessage.toObject();
+    result.message = decrypt(result.message);
+    res.status(200).json(result);
   } catch (error) {
     res.status(409).json({
       message: error.message,
@@ -170,14 +191,22 @@ export const searchMessages = async (req, res) => {
     const { chatRoomId, query } = req.params;
 
     const messages = await ChatMessage.find({
-      chatRoomId,
-      message: { $regex: query, $options: 'i' }
+      chatRoomId
     }).sort({ createdAt: -1 });
 
-    res.status(200).json(messages);
+    const filteredMessages = messages
+      .map(msg => {
+        const m = msg.toObject();
+        m.message = decrypt(m.message);
+        return m;
+      })
+      .filter(msg => msg.message.toLowerCase().includes(query.toLowerCase()));
+
+    res.status(200).json(filteredMessages);
   } catch (error) {
     res.status(409).json({
       message: error.message,
     });
   }
 };
+

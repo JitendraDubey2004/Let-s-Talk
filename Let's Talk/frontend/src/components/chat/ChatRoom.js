@@ -8,7 +8,7 @@ import ChatForm from "./ChatForm";
 import SearchMessages from "./SearchMessages";
 import PinnedMessages from "./PinnedMessages";
 
-export default function ChatRoom({ currentChat, currentUser, socket }) {
+export default function ChatRoom({ currentChat, currentUser, socket, onMessageSent }) {
   const [messages, setMessages] = useState([]);
   const [incomingMessage, setIncomingMessage] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -38,12 +38,15 @@ export default function ChatRoom({ currentChat, currentUser, socket }) {
 
   useEffect(() => {
     socket.current?.on("getMessage", (data) => {
-      setIncomingMessage({
-        senderId: data.senderId,
-        message: data.message,
-      });
+      if (data.chatRoomId === currentChat._id) {
+        setIncomingMessage({
+          sender: data.senderId,
+          message: data.message,
+          createdAt: new Date().toISOString()
+        });
+      }
     });
-  }, [socket]);
+  }, [socket, currentChat._id]);
 
   useEffect(() => {
     socket.current?.on("typing", (data) => {
@@ -131,6 +134,7 @@ export default function ChatRoom({ currentChat, currentUser, socket }) {
     );
 
     socket.current.emit("sendMessage", {
+      chatRoomId: currentChat._id,
       senderId: currentUser.uid,
       receiverId: receiverId,
       message: message,
@@ -143,6 +147,10 @@ export default function ChatRoom({ currentChat, currentUser, socket }) {
     };
     const res = await sendMessage(messageBody);
     setMessages([...messages, res]);
+
+    if (onMessageSent) {
+      onMessageSent(currentChat._id, message);
+    }
   };
 
   return (

@@ -19,5 +19,10 @@ export default function Contact({ chatRoom, onlineUsersId, currentUser, unreadCo
     fetchData();
   }, [chatRoom, currentUser]);
 
-  return <UserLayout user={contact} onlineUsersId={onlineUsersId} unreadCount={unreadCount} />;
+  return <UserLayout 
+    user={contact} 
+    onlineUsersId={onlineUsersId} 
+    unreadCount={unreadCount} 
+    lastMessage={chatRoom.lastMessage}
+  />;
 }
